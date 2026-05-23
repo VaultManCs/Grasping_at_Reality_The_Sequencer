@@ -1,5 +1,5 @@
 /*:
- * @plugindesc v1.3 Animated Title1 background + Early BGM start + "Press Any Button" gate that truly blocks menu opening (GaR_Titles) [RPG Maker MV]
+ * @plugindesc v1.4 Animated Title1 background + Early BGM start + Press Start gate (mobile-safe + Tap to Start) (GaR_Titles) [RPG Maker MV]
  * @author GaR (with Copilot)
  *
  * @help
@@ -10,7 +10,12 @@
  * - Optional loop count and optional AfterImage when loops finish.
  * - Optional early BGM start during boot so it plays during splash screens.
  * - Avoids replay bugs by not restarting the same BGM when entering Scene_Title.
- * - Optional "Press Any Button to Start" screen that hides the menu until input.
+ * - Optional "Press Any Button / Tap to Start" gate that hides menu until input.
+ *
+ * Mobile notes:
+ * - Uses TouchInput.isTriggered / isPressed / isReleased for reliable tap detection. [1](https://thegimptutorials.com/how-to-resize-image/)
+ * - If mobile browsers block audio until first touch, the first tap will also
+ *   attempt to start title BGM again (audio unlock behaviour).
  *
  * Put your animation frames in: /img/titles1/
  * Put your after/final image in: /img/titles1/ (optional)
@@ -107,14 +112,20 @@
  * @type boolean
  * @on Yes
  * @off No
- * @desc Show "Press Any Button" before the title command menu appears?
+ * @desc Show "Press Any Button / Tap to Start" before the title command menu appears?
  * @default false
  *
  * @param PressStartText
  * @parent ------------- Press Start -------------
  * @type string
- * @desc Text shown for press start.
+ * @desc Text shown for press start on desktop.
  * @default Press Any Button
+ *
+ * @param PressStartTextMobile
+ * @parent ------------- Press Start -------------
+ * @type string
+ * @desc Text shown for press start on mobile (auto-detected). Leave blank to use PressStartText.
+ * @default Tap to Start
  *
  * @param PressStartFontSize
  * @parent ------------- Press Start -------------
@@ -139,6 +150,14 @@
  * @max 120
  * @desc Blink speed (higher = slower). Uses sine fade.
  * @default 10
+ *
+ * @param PressStartInputDelay
+ * @parent ------------- Press Start -------------
+ * @type number
+ * @min 0
+ * @max 180
+ * @desc Frames to ignore input after title loads (prevents accidental tap carry-over).
+ * @default 20
  *
  * @param PressStartSe
  * @parent ------------- Press Start -------------
@@ -201,7 +220,6 @@
   }
   function parseStructArray(raw) {
     // MV stores struct arrays as JSON strings of JSON strings.
-    // Example: ["{\"Image\":\"Frame1\"}","{\"Image\":\"Frame2\"}"]
     try {
       var arr = JSON.parse(raw || "[]");
       return arr.map(function(s) {
@@ -233,11 +251,13 @@
   var bgmPan    = pNum("BgmPan", 0);
 
   // ---------------- Press Start params ----------------
-  var enablePressStart   = pBool("EnablePressStart", false);
-  var pressStartText     = pStr("PressStartText", "Press Any Button");
-  var pressStartFontSize = pNum("PressStartFontSize", 36, 8);
-  var pressStartY        = pNum("PressStartY", -120);
-  var pressStartBlinkSpd = pNum("PressStartBlinkSpeed", 10, 1);
+  var enablePressStart     = pBool("EnablePressStart", false);
+  var pressStartText       = pStr("PressStartText", "Press Any Button");
+  var pressStartTextMobile = pStr("PressStartTextMobile", "Tap to Start");
+  var pressStartFontSize   = pNum("PressStartFontSize", 36, 8);
+  var pressStartY          = pNum("PressStartY", -120);
+  var pressStartBlinkSpd   = pNum("PressStartBlinkSpeed", 10, 1);
+  var pressStartDelay      = pNum("PressStartInputDelay", 20, 0);
 
   var pressStartSe       = pStr("PressStartSe", "");
   var pressStartSeVolume = pNum("PressStartSeVolume", 90, 0);
@@ -248,6 +268,21 @@
   window.GaR_Titles = window.GaR_Titles || {};
   window.GaR_Titles._bootStartedBgm = false;
 
+  // ---------------- Mobile detection ----------------
+  function isMobile() {
+    // MV has Utils.isMobileDevice() in core; this is the usual reliable check.
+    return (window.Utils && Utils.isMobileDevice && Utils.isMobileDevice());
+  }
+  function pressStartDisplayText() {
+    if (isMobile()) {
+      // Auto "Tap to Start" on mobile; allow blank to fall back.
+      return (pressStartTextMobile && pressStartTextMobile.trim().length > 0)
+        ? pressStartTextMobile
+        : pressStartText;
+    }
+    return pressStartText;
+  }
+
   // ---------------- Audio helpers ----------------
   function desiredBgmObject() {
     return { name: bgmName, volume: bgmVolume, pitch: bgmPitch, pan: bgmPan };
@@ -255,7 +290,7 @@
   function isSameBgmPlaying() {
     return AudioManager._currentBgm && AudioManager._currentBgm.name === bgmName;
   }
-  function ensureCustomTitleBgmPlaying() {
+  function ensureCustomTitleBgmPlaying(force) {
     if (!playBgm) return;
 
     if (!bgmName) {
@@ -265,8 +300,8 @@
       return;
     }
 
-    // Avoid replay bug: only play if different track
-    if (!isSameBgmPlaying()) {
+    // Avoid replay bug unless forcing (force is used on first tap on mobile)
+    if (force || !isSameBgmPlaying()) {
       AudioManager.playBgm(desiredBgmObject());
     }
 
@@ -297,7 +332,10 @@
 
     if (playBgm && earlyBgmStart && bgmName && !window.GaR_Titles._bootStartedBgm) {
       window.GaR_Titles._bootStartedBgm = true;
-      ensureCustomTitleBgmPlaying();
+
+      // On mobile, audio may not start until user gesture; this may be silent.
+      // We'll force-play again on first tap in the Press Start gate.
+      ensureCustomTitleBgmPlaying(false);
     }
   };
 
@@ -306,12 +344,17 @@
     return ImageManager.loadTitle1(name);
   }
 
-  // ---------------- Press Start helpers ----------------
+  // ---------------- Input helper (mobile-safe) ----------------
   function anyInputTriggered() {
-    // Touch/click
-    if (TouchInput && TouchInput.isTriggered && TouchInput.isTriggered()) return true;
+    // Mobile touch reliability:
+    // TouchInput.isTriggered() is 1-frame; isPressed/isReleased are safer. [1](https://thegimptutorials.com/how-to-resize-image/)
+    if (window.TouchInput) {
+      if (TouchInput.isTriggered && TouchInput.isTriggered()) return true;  // [1](https://thegimptutorials.com/how-to-resize-image/)
+      if (TouchInput.isPressed && TouchInput.isPressed()) return true;      // [1](https://thegimptutorials.com/how-to-resize-image/)
+      if (TouchInput.isReleased && TouchInput.isReleased()) return true;    // [1](https://thegimptutorials.com/how-to-resize-image/)
+    }
 
-    // Any mapped key symbol
+    // Keyboard/gamepad:
     for (var keyCode in Input.keyMapper) {
       if (!Object.prototype.hasOwnProperty.call(Input.keyMapper, keyCode)) continue;
       var symbol = Input.keyMapper[keyCode];
@@ -339,11 +382,11 @@
 
   // ---------------- HARD BLOCK: prevent MV reopening the title command window ----------------
   // MV calls open() during Scene_Title.start. Closing once isn't enough.
-  // We intercept open/updateOpen for Window_TitleCommand while we're waiting for Press Start.
+  // Intercept open/updateOpen while waiting for press start.
   var _Window_TitleCommand_open = Window_TitleCommand.prototype.open;
   Window_TitleCommand.prototype.open = function() {
     var scene = SceneManager._scene;
-    if (scene && scene instanceof Scene_Title && scene._garPressStartWaiting) {
+    if (enablePressStart && scene && scene instanceof Scene_Title && scene._garPressStartWaiting) {
       this.openness = 0;
       this._opening = false;
       this._closing = false;
@@ -355,7 +398,7 @@
   var _Window_TitleCommand_updateOpen = Window_TitleCommand.prototype.updateOpen;
   Window_TitleCommand.prototype.updateOpen = function() {
     var scene = SceneManager._scene;
-    if (scene && scene instanceof Scene_Title && scene._garPressStartWaiting) {
+    if (enablePressStart && scene && scene instanceof Scene_Title && scene._garPressStartWaiting) {
       this.openness = 0;
       this._opening = false;
       return;
@@ -394,7 +437,7 @@
   var _Scene_Title_playTitleMusic = Scene_Title.prototype.playTitleMusic;
   Scene_Title.prototype.playTitleMusic = function() {
     if (playBgm) {
-      ensureCustomTitleBgmPlaying();
+      ensureCustomTitleBgmPlaying(false);
     } else {
       _Scene_Title_playTitleMusic.call(this);
     }
@@ -411,25 +454,39 @@
     b.outlineWidth = 6;
     b.outlineColor = "rgba(0,0,0,0.6)";
     b.textColor = "#ffffff";
-    b.drawText(pressStartText, 0, 0, Graphics.width, 64, "center");
+    b.drawText(pressStartDisplayText(), 0, 0, Graphics.width, 64, "center");
 
     var y = pressStartY;
     this._garPressStartSprite.y = (y < 0) ? (Graphics.height + y) : y;
     this._garPressStartSprite.opacity = 180;
 
+    // Add after command window so it displays above windows
     this.addChild(this._garPressStartSprite);
 
     this._garPressBlinkCount = 0;
+    this._garPressStartDelay = pressStartDelay;
+    this._garBgmUnlocked = false;
   };
 
   Scene_Title.prototype._garUpdatePressStart = function() {
     if (!this._garPressStartSprite) return;
+
+    if (this._garPressStartDelay > 0) {
+      this._garPressStartDelay--;
+      return;
+    }
 
     this._garPressBlinkCount++;
     var t = this._garPressBlinkCount / pressStartBlinkSpd;
     this._garPressStartSprite.opacity = 140 + Math.sin(t) * 110;
 
     if (anyInputTriggered()) {
+      // Mobile audio unlock: on first user gesture, force-start BGM again if needed.
+      if (isMobile() && playBgm && bgmName && !this._garBgmUnlocked) {
+        this._garBgmUnlocked = true;
+        ensureCustomTitleBgmPlaying(true); // force
+      }
+
       this._garPressStartWaiting = false;
 
       if (this._garPressStartSprite) this._garPressStartSprite.visible = false;
