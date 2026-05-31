@@ -46,11 +46,11 @@
  * @desc Image to show after the loop finishes. Leave blank to keep the last frame.
  * @default
  *
- * @param ---------------- Audio ----------------
+ * @param ---- Audio ----
  * @default
  *
  * @param PlayBgm
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type boolean
  * @on Yes
  * @off No
@@ -58,7 +58,7 @@
  * @default true
  *
  * @param EarlyBgmStart
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type boolean
  * @on Yes
  * @off No
@@ -66,7 +66,7 @@
  * @default true
  *
  * @param PreloadBgm
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type boolean
  * @on Yes
  * @off No
@@ -74,14 +74,14 @@
  * @default true
  *
  * @param BgmName
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type file
  * @dir audio/bgm/
  * @desc BGM file name (in audio/bgm/). Leave blank to stop BGM when PlayBgm is ON.
  * @default
  *
  * @param BgmVolume
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type number
  * @min 0
  * @max 100
@@ -89,7 +89,7 @@
  * @default 90
  *
  * @param BgmPitch
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type number
  * @min 50
  * @max 150
@@ -97,18 +97,18 @@
  * @default 100
  *
  * @param BgmPan
- * @parent ---------------- Audio ----------------
+ * @parent ---- Audio ----
  * @type number
  * @min -100
  * @max 100
  * @desc BGM pan (-100 to 100).
  * @default 0
  *
- * @param ------------- Press Start -------------
+ * @param ---- Press Start ----
  * @default
  *
  * @param EnablePressStart
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type boolean
  * @on Yes
  * @off No
@@ -116,19 +116,19 @@
  * @default false
  *
  * @param PressStartText
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type string
  * @desc Text shown for press start on desktop.
  * @default Press Any Button
  *
  * @param PressStartTextMobile
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type string
  * @desc Text shown for press start on mobile (auto-detected). Leave blank to use PressStartText.
  * @default Tap to Start
  *
  * @param PressStartFontSize
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min 8
  * @max 96
@@ -136,7 +136,7 @@
  * @default 36
  *
  * @param PressStartY
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min -9999
  * @max 9999
@@ -144,7 +144,7 @@
  * @default -120
  *
  * @param PressStartBlinkSpeed
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min 1
  * @max 120
@@ -152,7 +152,7 @@
  * @default 10
  *
  * @param PressStartInputDelay
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min 0
  * @max 180
@@ -160,28 +160,28 @@
  * @default 20
  *
  * @param PressStartSe
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type file
  * @dir audio/se/
  * @desc Optional SE played when pressing a button to reveal the menu.
  * @default
  *
  * @param PressStartSeVolume
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min 0
  * @max 100
  * @default 90
  *
  * @param PressStartSePitch
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min 50
  * @max 150
  * @default 100
  *
  * @param PressStartSePan
- * @parent ------------- Press Start -------------
+ * @parent ---- Press Start ----
  * @type number
  * @min -100
  * @max 100
@@ -201,7 +201,7 @@
   var PLUGIN_NAME = "GaR_Titles";
   var params = PluginManager.parameters(PLUGIN_NAME);
 
-  // ---------------- Param helpers ----------------
+  // ------- Param helpers ----------------
   function pBool(name, def) {
     var v = params[name];
     if (v === undefined) return def;
@@ -230,7 +230,7 @@
     }
   }
 
-  // ---------------- Animation params ----------------
+  // ---- Animation params ----------------
   var frameStructs = parseStructArray(params["Frames"]);
   var frameNames = frameStructs
     .map(function(o){ return (o && o.Image) ? String(o.Image) : ""; })
@@ -240,7 +240,7 @@
   var loops      = Math.max(0, pNum("Loops", 0, 0));
   var afterImage = pStr("AfterImage", "");
 
-  // ---------------- Audio params ----------------
+  // ---- Audio params ----------------
   var playBgm       = pBool("PlayBgm", true);
   var earlyBgmStart = pBool("EarlyBgmStart", true);
   var preloadBgm    = pBool("PreloadBgm", true);
@@ -250,7 +250,7 @@
   var bgmPitch  = pNum("BgmPitch", 100, 0);
   var bgmPan    = pNum("BgmPan", 0);
 
-  // ---------------- Press Start params ----------------
+  // ------- Press Start params ----------------
   var enablePressStart     = pBool("EnablePressStart", false);
   var pressStartText       = pStr("PressStartText", "Press Any Button");
   var pressStartTextMobile = pStr("PressStartTextMobile", "Tap to Start");
@@ -283,7 +283,7 @@
     return pressStartText;
   }
 
-  // ---------------- Audio helpers ----------------
+  // ---- Audio helpers ----------------
   function desiredBgmObject() {
     return { name: bgmName, volume: bgmVolume, pitch: bgmPitch, pan: bgmPan };
   }
@@ -443,7 +443,7 @@
     }
   };
 
-  // ---------------- Press Start UI ----------------
+  // ------- Press Start UI ----------------
   Scene_Title.prototype._garCreatePressStart = function() {
     if (this._garPressStartSprite) return;
 
