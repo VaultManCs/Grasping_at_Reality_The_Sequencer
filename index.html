@@ -39,7 +39,6 @@
 
 <body>
 
-<!-- Audio unlock overlay -->
 <div id="startButton">Tap to Start</div>
 
 <script>
@@ -48,33 +47,41 @@
     startButton.addEventListener("click", () => {
         startButton.style.display = "none";
 
-        // Unlock audio context BEFORE MV boots
+        // Unlock audio BEFORE loading MV
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             ctx.resume();
         } catch(e) {}
 
-        // Flag for MV audio system
-        window._mvAudioUnlocked = true;
+        // Load MV engine scripts dynamically AFTER tap
+        const scripts = [
+            "js/libs/pixi.js",
+            "js/libs/pixi-tilemap.js",
+            "js/libs/pixi-picture.js",
+            "js/libs/fpsmeter.js",
+            "js/libs/lz-string.js",
+            "js/libs/iphone-inline-video.browser.js",
+            "js/rpg_core.js",
+            "js/rpg_managers.js",
+            "js/rpg_objects.js",
+            "js/rpg_scenes.js",
+            "js/rpg_sprites.js",
+            "js/rpg_windows.js",
+            "js/plugins.js",
+            "js/main.js"
+        ];
+
+        function loadScript(i) {
+            if (i >= scripts.length) return;
+            const s = document.createElement("script");
+            s.src = scripts[i];
+            s.onload = () => loadScript(i + 1);
+            document.body.appendChild(s);
+        }
+
+        loadScript(0);
     });
 </script>
-
-<!-- MV scripts (must load immediately, unchanged paths) -->
-<script src="js/libs/pixi.js"></script>
-<script src="js/libs/pixi-tilemap.js"></script>
-<script src="js/libs/pixi-picture.js"></script>
-<script src="js/libs/fpsmeter.js"></script>
-<script src="js/libs/lz-string.js"></script>
-<script src="js/libs/iphone-inline-video.browser.js"></script>
-
-<script src="js/rpg_core.js"></script>
-<script src="js/rpg_managers.js"></script>
-<script src="js/rpg_objects.js"></script>
-<script src="js/rpg_scenes.js"></script>
-<script src="js/rpg_sprites.js"></script>
-<script src="js/rpg_windows.js"></script>
-<script src="js/plugins.js"></script>
-<script src="js/main.js"></script>
 
 </body>
 </html>
