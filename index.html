@@ -43,24 +43,23 @@
 <div id="startButton">Tap to Start</div>
 
 <script>
-    // We unlock audio BEFORE MV loads
     const startButton = document.getElementById("startButton");
 
     startButton.addEventListener("click", () => {
         startButton.style.display = "none";
 
-        // Unlock audio context early
+        // Unlock audio context BEFORE MV boots
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             ctx.resume();
         } catch(e) {}
 
-        // Allow MV to boot normally
+        // Flag for MV audio system
         window._mvAudioUnlocked = true;
     });
 </script>
 
-<!-- MV scripts (unchanged, load immediately) -->
+<!-- MV scripts (must load immediately, unchanged paths) -->
 <script src="js/libs/pixi.js"></script>
 <script src="js/libs/pixi-tilemap.js"></script>
 <script src="js/libs/pixi-picture.js"></script>
