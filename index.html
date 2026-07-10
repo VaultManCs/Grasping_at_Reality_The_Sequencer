@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
 
-    <!-- Mobile + PWA friendliness -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
@@ -43,41 +42,40 @@
 <!-- Audio unlock overlay -->
 <div id="startButton">Tap to Start</div>
 
-<!-- MV scripts (unchanged) -->
-<script type="text/javascript" src="js/libs/pixi.js"></script>
-<script type="text/javascript" src="js/libs/pixi-tilemap.js"></script>
-<script type="text/javascript" src="js/libs/pixi-picture.js"></script>
-<script type="text/javascript" src="js/libs/fpsmeter.js"></script>
-<script type="text/javascript" src="js/libs/lz-string.js"></script>
-<script type="text/javascript" src="js/libs/iphone-inline-video.browser.js"></script>
-
-<script type="text/javascript" src="js/rpg_core.js"></script>
-<script type="text/javascript" src="js/rpg_managers.js"></script>
-<script type="text/javascript" src="js/rpg_objects.js"></script>
-<script type="text/javascript" src="js/rpg_scenes.js"></script>
-<script type="text/javascript" src="js/rpg_sprites.js"></script>
-<script type="text/javascript" src="js/rpg_windows.js"></script>
-<script type="text/javascript" src="js/plugins.js"></script>
-
-<!-- MV main.js will be delayed until user taps -->
 <script>
+    // We unlock audio BEFORE MV loads
     const startButton = document.getElementById("startButton");
 
     startButton.addEventListener("click", () => {
         startButton.style.display = "none";
 
-        // Audio unlock for MV
+        // Unlock audio context early
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             ctx.resume();
         } catch(e) {}
 
-        // Load MV main AFTER interaction (fixes Edge mobile)
-        const script = document.createElement("script");
-        script.src = "js/main.js";
-        document.body.appendChild(script);
+        // Allow MV to boot normally
+        window._mvAudioUnlocked = true;
     });
 </script>
+
+<!-- MV scripts (unchanged, load immediately) -->
+<script src="js/libs/pixi.js"></script>
+<script src="js/libs/pixi-tilemap.js"></script>
+<script src="js/libs/pixi-picture.js"></script>
+<script src="js/libs/fpsmeter.js"></script>
+<script src="js/libs/lz-string.js"></script>
+<script src="js/libs/iphone-inline-video.browser.js"></script>
+
+<script src="js/rpg_core.js"></script>
+<script src="js/rpg_managers.js"></script>
+<script src="js/rpg_objects.js"></script>
+<script src="js/rpg_scenes.js"></script>
+<script src="js/rpg_sprites.js"></script>
+<script src="js/rpg_windows.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/main.js"></script>
 
 </body>
 </html>
