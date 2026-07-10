@@ -1,29 +1,83 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="viewport" content="user-scalable=no">
-        <link rel="icon" href="icon/icon.png" type="image/png">
-        <link rel="apple-touch-icon" href="icon/icon.png">
-        <link rel="stylesheet" type="text/css" href="fonts/gamefont.css">
-        <title>Grasping at Reality: The Sequencer</title>
-    </head>
-    <body style="background-color: black">
-        <script type="text/javascript" src="js/libs/pixi.js"></script>
-        <script type="text/javascript" src="js/libs/pixi-tilemap.js"></script>
-        <script type="text/javascript" src="js/libs/pixi-picture.js"></script>
-        <script type="text/javascript" src="js/libs/fpsmeter.js"></script>
-        <script type="text/javascript" src="js/libs/lz-string.js"></script>
-        <script type="text/javascript" src="js/libs/iphone-inline-video.browser.js"></script>
-        <script type="text/javascript" src="js/rpg_core.js"></script>
-        <script type="text/javascript" src="js/rpg_managers.js"></script>
-        <script type="text/javascript" src="js/rpg_objects.js"></script>
-        <script type="text/javascript" src="js/rpg_scenes.js"></script>
-        <script type="text/javascript" src="js/rpg_sprites.js"></script>
-        <script type="text/javascript" src="js/rpg_windows.js"></script>
-        <script type="text/javascript" src="js/plugins.js"></script>
-        <script type="text/javascript" src="js/main.js"></script>
-    </body>
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Mobile + PWA friendliness -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
+
+    <link rel="icon" href="icon/icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon/icon.png">
+    <link rel="stylesheet" type="text/css" href="fonts/gamefont.css">
+
+    <title>Grasping at Reality: The Sequencer</title>
+
+    <style>
+        body {
+            background-color: black;
+            margin: 0;
+            overflow: hidden;
+        }
+        #startButton {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-family: sans-serif;
+            z-index: 9999;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Audio unlock overlay -->
+<div id="startButton">Tap to Start</div>
+
+<!-- MV scripts (unchanged) -->
+<script type="text/javascript" src="js/libs/pixi.js"></script>
+<script type="text/javascript" src="js/libs/pixi-tilemap.js"></script>
+<script type="text/javascript" src="js/libs/pixi-picture.js"></script>
+<script type="text/javascript" src="js/libs/fpsmeter.js"></script>
+<script type="text/javascript" src="js/libs/lz-string.js"></script>
+<script type="text/javascript" src="js/libs/iphone-inline-video.browser.js"></script>
+
+<script type="text/javascript" src="js/rpg_core.js"></script>
+<script type="text/javascript" src="js/rpg_managers.js"></script>
+<script type="text/javascript" src="js/rpg_objects.js"></script>
+<script type="text/javascript" src="js/rpg_scenes.js"></script>
+<script type="text/javascript" src="js/rpg_sprites.js"></script>
+<script type="text/javascript" src="js/rpg_windows.js"></script>
+<script type="text/javascript" src="js/plugins.js"></script>
+
+<!-- MV main.js will be delayed until user taps -->
+<script>
+    const startButton = document.getElementById("startButton");
+
+    startButton.addEventListener("click", () => {
+        startButton.style.display = "none";
+
+        // Audio unlock for MV
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            ctx.resume();
+        } catch(e) {}
+
+        // Load MV main AFTER interaction (fixes Edge mobile)
+        const script = document.createElement("script");
+        script.src = "js/main.js";
+        document.body.appendChild(script);
+    });
+</script>
+
+</body>
 </html>
