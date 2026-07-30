@@ -1,0 +1,34 @@
+name: Auto Deploy RPG Maker Web Port
+
+on:
+  push:
+    branches:
+      - main  # or whichever branch you edit your game from
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Build game
+        run: |
+          python rpgmaker_web_port.py Grasping_at_Reality_The_Sequencer --source "C:\Grasping at Reality\GArts\www" --deploy-target local --output-dir ./dist/Grasping_at_Reality_The_Sequencer
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/Grasping_at_Reality_The_Sequencer
+          publish_branch: gh-pages
