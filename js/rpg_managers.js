@@ -2837,3 +2837,25 @@ PluginManager.loadScript = function(name) {
 PluginManager.onError = function(e) {
     this._errorUrls.push(e.target._url);
 };
+
+
+// ==========================================
+// [RPGMZ Toolkit Inject] Force browser storage mode.
+// Override engine isNwjs and isLocalMode checks.
+// ==========================================
+if (typeof Utils !== 'undefined') {
+    Utils.isNwjs = function() { return false; };
+}
+if (typeof StorageManager !== 'undefined') {
+    StorageManager.isLocalMode = function() { return false; };
+}
+if (typeof AudioManager !== 'undefined') {
+    AudioManager.audioFileExt = function() {
+        const agent = navigator.userAgent || "";
+        const isIOSDevice =
+            /iPhone|iPad|iPod/i.test(agent) ||
+            (navigator.platform === "MacIntel" && typeof navigator.maxTouchPoints === "number" && navigator.maxTouchPoints > 1);
+        return isIOSDevice ? ".m4a" : ".ogg";
+    };
+}
+console.log("🔒 [RPGMZ Web Toolkit] Web storage mode enforced for browser runtime.");
