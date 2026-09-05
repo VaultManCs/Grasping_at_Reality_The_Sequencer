@@ -1,3 +1,32 @@
+/*:
+ * @plugindesc GaR Step Sequencer
+ * @author GaR
+ *
+ * @param KickSound0
+ * @text Kick Sound 0
+ * @default Kick
+ *
+ * @param KickSound1
+ * @text Kick Sound 1
+ * @default Kick2
+ *
+ * @param SnareSound0
+ * @text Snare Sound 0
+ * @default Snare
+ *
+ * @param HatSound0
+ * @text Hat Sound 0
+ * @default Hat
+ *
+ * @param BassSound0
+ * @text Bass Sound 0
+ * @default Bass
+ *
+ * @param BassSound1
+ * @text Bass Sound 1
+ * @default Bass2
+ */
+
 (function() {
 
 "use strict";
