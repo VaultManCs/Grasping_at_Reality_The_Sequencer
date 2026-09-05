@@ -46,7 +46,7 @@ function playBass(pitch) {
 
     AudioManager.playSe({
         name: getBassSound(),
-        volume: 50,
+        volume: 80,
         pitch: pitch,
         pan: 0
     });
